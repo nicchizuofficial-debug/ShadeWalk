@@ -1,4 +1,4 @@
-package com.example.shadewalk.shade_walk
+package com.nicchizu.shadewalk
 
 import io.flutter.embedding.android.FlutterActivity
 

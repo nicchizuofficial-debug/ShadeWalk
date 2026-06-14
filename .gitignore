@@ -1,0 +1,35 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+
+# Secrets（APIキーは絶対にコミットしない）
+*.env
+lib/core/constants/secrets.dart
+
+# Android 署名キー（絶対にコミットしない）
+android/key.properties
+*.jks
+*.keystore
+
+# iOS 証明書
+*.p12
+*.mobileprovision
+
+# iOS Pods
+ios/Pods/
+ios/.symlinks/
+
+# Web ビルド成果物
+web/

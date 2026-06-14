@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "shadewalk-web",
+      "runtimeExecutable": "C:/src/flutter/bin/cache/dart-sdk/bin/dart.exe",
+      "runtimeArgs": ["run", "tool/serve_web.dart"],
+      "port": 8080
+    }
+  ]
+}

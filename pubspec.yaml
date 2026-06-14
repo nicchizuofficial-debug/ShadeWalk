@@ -1,0 +1,61 @@
+name: shade_walk
+description: 日陰（または日向）を優先したルートを案内するナビゲーションアプリ。
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  # Color.withValues 等の新APIを使用しているため Flutter 3.27+ を要求。
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 地図（OpenStreetMap タイル。キー不要・無料）
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.0
+  # 位置情報
+  geolocator: ^11.0.0
+
+  # 太陽位置計算（高度・方位角）。suncalc の Dart/Flutter 移植。
+  apsl_sun_calc: ^0.0.4
+
+  # ルート検索（OpenRouteService API 呼び出し用）
+  http: ^1.2.0
+
+  # Web localStorage アクセス（建物キャッシュ用）
+  web: ^1.1.0
+
+  # マネタイズ
+  google_mobile_ads: ^5.0.0
+  in_app_purchase: ^3.1.13
+
+  # 状態管理（軽量・個人開発向け）
+  provider: ^6.1.2
+
+  # 繊細なフォント（明朝/セリフ）
+  google_fonts: ^6.2.0
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.3
+  image: ^4.5.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#6F5B7E"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"
+  min_sdk_android: 23
+  web:
+    generate: false
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/buildings/
+    - assets/icon/

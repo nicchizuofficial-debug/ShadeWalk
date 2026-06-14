@@ -1,0 +1,76 @@
+workflows:
+
+  # ──────────────────────────────────────────
+  # iOS リリース → TestFlight → App Store
+  # ──────────────────────────────────────────
+  ios-release:
+    name: iOS Release
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.nicchizu.shadewalk
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Install CocoaPods
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Build iOS
+        script: |
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_ID") + 1))
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      email:
+        recipients:
+          - nicchizu.official@gmail.com
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false   # TestFlight 確認後に手動で本番申請
+
+  # ──────────────────────────────────────────
+  # Android リリース → Google Play 内部テスト
+  # ──────────────────────────────────────────
+  android-release:
+    name: Android Release
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      flutter: stable
+      android_signing:
+        - shadewalk_keystore
+      groups:
+        - google_play
+    scripts:
+      - name: Flutter pub get
+        script: flutter pub get
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release \
+            --build-name=1.0.0 \
+            --build-number=$(($(google-play get-latest-build-number --package-name com.nicchizu.shadewalk --tracks internal) + 1))
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/mapping/release/mapping.txt
+    publishing:
+      email:
+        recipients:
+          - nicchizu.official@gmail.com
+        notify:
+          success: true
+          failure: true
+      google_play:
+        credentials: $GPLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: false

@@ -23,7 +23,7 @@ workflows:
         script: |
           flutter build ipa --release \
             --build-name=1.0.0 \
-            --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_ID") + 1))
+            --build-number=$PROJECT_BUILD_NUMBER
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
@@ -59,7 +59,7 @@ workflows:
         script: |
           flutter build appbundle --release \
             --build-name=1.0.0 \
-            --build-number=$(($(google-play get-latest-build-number --package-name com.nicchizu.shadewalk --tracks internal) + 1))
+            --build-number=$PROJECT_BUILD_NUMBER
     artifacts:
       - build/app/outputs/bundle/release/*.aab
       - build/app/outputs/mapping/release/mapping.txt

@@ -221,7 +221,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// [_buildingRadiusMeters] m 円を NE/NW/SE/SW の4象限に分割し、
-  /// 各象限を並列で Overpass から取得して重複なしに結合する。
+  /// 各象限を順番に Overpass から取得して重複なしに結合する。
+  /// 並列送信だと Overpass のレート制限で SE/SW が弾かれるため逐次実行する。
   Future<List<Building>> _fetchBuildingsTiled(LatLng center) async {
     final r = _buildingRadiusMeters;
     final north = GeoUtils.offset(
@@ -244,17 +245,19 @@ class _MapScreenState extends State<MapScreen> {
           northEast: center),                                   // SW
     ];
 
-    final results = await Future.wait(
-      tiles.map((bbox) =>
-          _buildingRepo.fetchBuildings(bbox).catchError((_) => <Building>[])),
-    );
-
-    // 重複排除（タイル境界の建物が重複する場合がある）
+    // Overpass は同一IP からの並列リクエストを制限するため逐次実行し、
+    // レート制限 (HTTP 429) による SE/SW タイルの空応答を防ぐ。
     final seen = <String>{};
     final merged = <Building>[];
-    for (final list in results) {
-      for (final b in list) {
-        if (seen.add(b.id)) merged.add(b);
+    for (int i = 0; i < tiles.length; i++) {
+      if (i > 0) await Future.delayed(const Duration(milliseconds: 600));
+      try {
+        final list = await _buildingRepo.fetchBuildings(tiles[i]);
+        for (final b in list) {
+          if (seen.add(b.id)) merged.add(b);
+        }
+      } catch (_) {
+        // タイル取得失敗は無視して次へ（部分的に表示）
       }
     }
     return merged;
@@ -323,10 +326,16 @@ class _MapScreenState extends State<MapScreen> {
 
     // 影ポリゴン（先に描いて建物の下に）。
     // 半影tierほど intensity が低く、塗りの濃さもそれに比例してグラデーションになる。
+    // coverage 円外へ延伸した部分を除去し、円内だけに影を表示する。
     final maxAlpha = _mode == WalkMode.shade ? 0.32 : 0.14;
     for (final s in field.shadows) {
+      final clipped = s.outline
+          .where((p) =>
+              GeoUtils.haversineMeters(_coverageCenter, p) <= _coverageRadius)
+          .toList();
+      if (clipped.length < 3) continue;
       polygons.add(Polygon(
-        points: s.outline,
+        points: clipped,
         color: AppColors.shadow.withValues(alpha: maxAlpha * s.intensity),
         borderStrokeWidth: 0,
       ));
@@ -353,7 +362,7 @@ class _MapScreenState extends State<MapScreen> {
     // 日陰/日向ヒートマップ：隙間なく並ぶ正方形タイルで色分け表示。
     // 影ポリゴン・建物より下に描くため polygons の先頭に挿入する。
     if (_showHeatmap) {
-      final covHeat = _coverageRadius.clamp(300.0, 1000.0);
+      final covHeat = _coverageRadius; // coverage 円全域を覆う（旧: 1000m上限で円とズレていた）
       final stepM = (covHeat / 22).clamp(25.0, 70.0); // タイル1辺[m]
       final latStep = stepM / 111320.0;
       final lngStep = stepM /
